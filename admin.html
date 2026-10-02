@@ -10,185 +10,376 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
 
-    <style>
-        :root {
-            --bg: #030303;
-            --surface: #0a0a0a;
-            --surface-hover: #121212;
-            --border: #1a1a1a;
-            --accent: #0ea5e9;
-            --accent-bg: rgba(14, 165, 233, 0.1);
-            --text: #ffffff;
-            --text-secondary: #888888;
-            --success: #10b981;
-            --danger: #ef4444;
-            --radius-lg: 24px;
-            --radius-md: 16px;
-            --transition-smooth: all 0.3s ease;
-        }
+        <style>
+    :root {
+        --bg: #030712;
+        --surface: #111827;
+        --surface-hover: #1f2937;
+        --border: #374151;
+        --accent: #3b82f6;
+        --accent-glow: rgba(59, 130, 246, 0.4);
+        --text: #f9fafb;
+        --text-secondary: #9ca3af;
+        --success: #10b981;
+        --danger: #ef4444;
+        --warning: #f59e0b;
+        --sidebar-width: 280px;
+        --radius-lg: 16px;
+        --radius-md: 10px;
+        --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Outfit', sans-serif; }
 
-        body {
-            font-family: 'Outfit', sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            padding: 20px;
-        }
+    html, body {
+        background-color: var(--bg);
+        color: var(--text);
+        display: flex;
+        min-height: 100vh;
+        width: 100%;
+        max-width: 100vw;
+        overflow-x: hidden;
+    }
 
-        .header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 32px; padding-bottom: 20px; border-bottom: 1px solid var(--border);
-        }
+    /* Floating Mobile Menu Button */
+    .mobile-header {
+        display: none;
+        position: fixed;
+        bottom: 24px; right: 24px;
+        z-index: 1000;
+    }
+    .hamburger-btn {
+        background: rgba(17, 24, 39, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255,255,255,0.1);
+        color: #fff; 
+        cursor: pointer; 
+        padding: 0; 
+        border-radius: 50%; 
+        width: 56px; height: 56px;
+        display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        transition: var(--transition-smooth);
+    }
+    .hamburger-btn:active { transform: scale(0.9); }
 
-        .header h1 { font-weight: 300; font-size: 24px; }
-        
-        .date-picker-wrap {
-            display: flex; gap: 12px; align-items: center;
-        }
-        
-        input[type="date"] {
-            background: var(--surface); color: var(--text);
-            border: 1px solid var(--border); border-radius: var(--radius-md);
-            padding: 12px 16px; font-family: 'Outfit', sans-serif;
-            font-size: 16px; outline: none; color-scheme: dark;
-        }
+    .sidebar-overlay {
+        display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; transition: var(--transition-smooth);
+    }
+    .sidebar-overlay.open { display: block; }
 
-        .stats-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;
-            margin-bottom: 32px;
-        }
+    /* Sidebar */
+    .sidebar {
+        width: var(--sidebar-width);
+        background: rgba(17, 24, 39, 1);
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        padding: 24px;
+        position: fixed;
+        height: 100vh;
+        z-index: 1001;
+        transition: var(--transition-smooth);
+    }
+    
+    .sidebar-logo {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 40px;
+        padding-bottom: 24px;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .sidebar-logo img { height: 44px; filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.4)); }
+    .sidebar-logo h2 { font-size: 22px; font-weight: 700; background: linear-gradient(90deg, #fff, #9ca3af); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
-        .stat-card {
-            background: var(--surface); border: 1px solid var(--border);
-            border-radius: var(--radius-md); padding: 24px; text-align: center;
-        }
-        .stat-card .val { font-size: 32px; font-weight: 500; color: var(--accent); margin-bottom: 4px; }
-        .stat-card .lbl { font-size: 14px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
+    .nav-menu { display: flex; flex-direction: column; gap: 8px; }
+    .nav-item {
+        padding: 14px 18px;
+        border-radius: var(--radius-md);
+        color: var(--text-secondary);
+        cursor: pointer;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        transition: var(--transition-smooth);
+        font-size: 15px;
+    }
+    .nav-item svg { width: 20px; height: 20px; transition: var(--transition-smooth); }
+    .nav-item:hover { background: var(--surface-hover); color: var(--text); }
+    .nav-item:hover svg { stroke: var(--accent); }
+    .nav-item.active {
+        background: linear-gradient(90deg, rgba(59,130,246,0.1) 0%, transparent 100%);
+        color: var(--accent);
+        border-left: 3px solid var(--accent);
+    }
+    .nav-item.active svg { stroke: var(--accent); }
 
-        .booking-list { display: flex; flex-direction: column; gap: 12px; }
+    /* Main Content */
+    .main-content {
+        flex: 1;
+        margin-left: var(--sidebar-width);
+        padding: 32px 48px;
+        background: radial-gradient(circle at top right, rgba(59, 130, 246, 0.08), transparent 40%), var(--bg);
+        min-height: 100vh;
+        width: calc(100% - var(--sidebar-width));
+    }
 
-        .booking-card {
-            background: var(--surface); border: 1px solid var(--border);
-            border-radius: var(--radius-md); padding: 20px;
-            display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px;
-            transition: var(--transition-smooth);
-        }
-        .booking-card:hover { border-color: #333; }
-        
-        .b-time { font-size: 24px; font-weight: 600; color: var(--accent); width: 80px; }
-        .b-info { flex: 1; min-width: 200px; }
-        .b-car { font-size: 18px; font-weight: 500; margin-bottom: 4px; }
-        .b-details { font-size: 14px; color: var(--text-secondary); }
-        .b-price { font-size: 18px; font-weight: 400; color: #fff; }
+    .top-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 40px;
+        background: rgba(17, 24, 39, 0.4);
+        backdrop-filter: blur(12px);
+        padding: 16px 24px;
+        border-radius: var(--radius-lg);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+    
+    .page-title { font-size: 24px; font-weight: 600; color: #fff; display: flex; align-items: center; gap: 12px; }
+    .page-title svg { color: var(--accent); }
 
-        .b-actions { display: flex; gap: 8px; }
-        .btn {
-            background: transparent; border: 1px solid var(--border);
-            color: var(--text); padding: 10px 16px; border-radius: 8px;
-            font-family: 'Outfit', sans-serif; cursor: pointer; transition: var(--transition-smooth);
-        }
-        .btn-success:hover { background: rgba(16, 185, 129, 0.1); border-color: var(--success); color: var(--success); }
-        .btn-danger:hover { background: rgba(239, 68, 68, 0.1); border-color: var(--danger); color: var(--danger); }
+    .date-filter {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: rgba(0,0,0,0.3);
+        padding: 10px 16px;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border);
+        transition: var(--transition-smooth);
+    }
+    .date-filter:focus-within { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(59,130,246,0.2); }
+    .date-filter input {
+        background: transparent; border: none; color: var(--text); outline: none; font-family: inherit; font-size: 15px; color-scheme: dark; cursor: pointer;
+    }
 
-        .empty-state { text-align: center; padding: 40px; color: var(--text-secondary); }
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 24px;
+        margin-bottom: 40px;
+    }
+    .stat-card {
+        background: rgba(17, 24, 39, 0.6);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.05);
+        border-radius: var(--radius-lg);
+        padding: 24px;
+        position: relative;
+        overflow: hidden;
+        transition: var(--transition-smooth);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    .stat-card::before {
+        content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 3px;
+        background: var(--accent); opacity: 0.5; transition: var(--transition-smooth);
+    }
+    .stat-card:hover::before { opacity: 1; }
+    .stat-card:hover { transform: translateY(-5px); border-color: rgba(255,255,255,0.1); box-shadow: 0 15px 30px rgba(0,0,0,0.4); }
+    
+    .stat-card .icon-wrapper { position: absolute; right: -10px; bottom: -10px; opacity: 0.05; transform: scale(3); transition: var(--transition-smooth); pointer-events: none; }
+    .stat-card:hover .icon-wrapper { opacity: 0.1; transform: scale(3.5) rotate(-10deg); }
+    
+    .stat-card .lbl { color: var(--text-secondary); font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; z-index: 1; }
+    .stat-card .val { font-size: 36px; font-weight: 700; color: #fff; z-index: 1; text-shadow: 0 0 20px currentColor; }
 
-        /* Status Badges */
-        .badge {
-            font-size: 12px; padding: 4px 8px; border-radius: 4px; font-weight: 600; text-transform: uppercase;
-        }
-        .bg-confirmed { background: var(--accent-bg); color: var(--accent); }
-        .bg-completed { background: rgba(16, 185, 129, 0.1); color: var(--success); }
-        .bg-cancelled { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
-        
-        .alert-box {
-            background: rgba(239, 165, 0, 0.1); border: 1px solid #f59e0b; color: #fcd34d;
-            padding: 16px; border-radius: var(--radius-md); margin-bottom: 24px; font-size: 14px;
-        }
-        
-        .tabs { display: flex; gap: 24px; margin-bottom: 24px; border-bottom: 1px solid var(--border); }
-        .tab { padding-bottom: 12px; cursor: pointer; color: var(--text-secondary); font-size: 18px; transition: var(--transition-smooth); }
-        .tab:hover { color: var(--text); }
-        .tab.active { border-bottom: 2px solid var(--accent); color: var(--accent); font-weight: 500; }
-        
-        .history-group-title { margin-top: 32px; margin-bottom: 12px; font-size: 20px; font-weight: 300; color: #fff; border-bottom: 1px solid var(--border); padding-bottom: 8px;}
+    /* Chart Section */
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        margin-bottom: 40px;
+        width: 100%;
+        max-width: 100%;
+    }
+    .chart-container {
+        background: rgba(17, 24, 39, 0.8);
+        border: 1px solid rgba(255,255,255,0.05);
+        border-radius: var(--radius-lg);
+        padding: 16px;
+        position: relative;
+        display: block;
+        width: 100%;
+        overflow: hidden;
+    }
+    .chart-wrapper {
+        position: relative;
+        height: 250px;
+        width: 100%;
+    }
+    .chart-header { margin-bottom: 20px; font-size: 16px; font-weight: 600; color: var(--text-secondary); display: flex; align-items: center; gap: 8px; }
+    
+    .mini-card {
+        background: rgba(17, 24, 39, 0.6);
+        border: 1px solid rgba(255,255,255,0.05);
+        border-radius: var(--radius-lg);
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
 
-        /* ── Modern Toast ── */
-        .toast-container {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-            z-index: 10000; display: flex; flex-direction: column; gap: 10px;
-            pointer-events: none; width: 90%; max-width: 400px;
-        }
-        .toast {
-            background: var(--surface); border: 1px solid var(--border);
-            color: var(--text); padding: 14px 20px; border-radius: var(--radius-md);
-            font-family: 'Outfit', sans-serif; font-size: 14px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            display: flex; align-items: flex-start; gap: 12px;
-            animation: toastIn 0.3s cubic-bezier(0.2,0.8,0.2,1) forwards;
-        }
-        .toast svg { width: 20px; height: 20px; flex-shrink: 0; margin-top: -1px; }
-        .toast-badge {
-            font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 10px; margin-left: 8px; display: inline-block;
-        }
-        
-        .toast.success { border-color: var(--success); }
-        .toast.success svg { fill: var(--success); }
-        .toast.success .toast-badge { background: var(--success); color: #000; }
-        .toast.error { border-color: var(--danger); }
-        .toast.error svg { fill: var(--danger); }
-        .toast.error .toast-badge { background: var(--danger); color: #fff; }
+    /* Bookings List */
+    .list-header {
+        font-size: 20px; font-weight: 600; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;
+        border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 16px;
+    }
+    
+    .booking-card {
+        background: rgba(17, 24, 39, 0.5);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.05);
+        border-radius: var(--radius-lg);
+        padding: 20px;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        transition: var(--transition-smooth);
+        position: relative;
+        overflow: hidden;
+    }
+    .booking-card::before {
+        content: ''; position: absolute; left: 0; top: 0; height: 100%; width: 4px; background: transparent; transition: var(--transition-smooth);
+    }
+    .booking-card:hover { background: rgba(17, 24, 39, 0.8); border-color: rgba(255,255,255,0.1); transform: translateX(4px); }
+    .booking-card:hover::before { background: var(--accent); }
+    
+    .b-time {
+        text-align: center;
+        min-width: 90px;
+        padding-right: 24px;
+        border-right: 1px solid rgba(255,255,255,0.05);
+    }
+    .b-time .start { font-size: 20px; font-weight: 700; color: #fff; }
+    .b-time .end { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
 
-        @keyframes toastIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes toastOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-20px); } }
-        @keyframes toastShake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-4px); }
-            50% { transform: translateX(4px); }
-            75% { transform: translateX(-4px); }
-        }
+    .b-info { flex: 1; }
+    .b-car { font-size: 18px; font-weight: 600; margin-bottom: 6px; display: flex; align-items: center; gap: 12px; color: #fff; }
+    .b-details { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+    
+    .b-price-block { text-align: right; }
+    .b-price { font-size: 22px; font-weight: 700; color: var(--success); margin-bottom: 12px; }
+    .b-actions { display: flex; gap: 8px; justify-content: flex-end; }
 
-        /* ── Confirm Modal ── */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.8); z-index: 9999;
-            display: none; align-items: center; justify-content: center;
-            opacity: 0; transition: opacity 0.3s;
-        }
-        .modal-overlay.show { display: flex; opacity: 1; }
-        .confirm-modal {
-            background: var(--surface); border: 1px solid var(--border);
-            border-radius: var(--radius-lg); padding: 32px 24px;
-            width: 90%; max-width: 400px; text-align: center;
-            transform: translateY(20px); transition: transform 0.3s;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.8);
-        }
-        .modal-overlay.show .confirm-modal { transform: translateY(0); }
-        .confirm-modal h3 { font-size: 22px; font-weight: 300; margin-bottom: 12px; }
-        .confirm-modal p { font-size: 15px; color: var(--text-secondary); margin-bottom: 24px; }
-        .confirm-actions { display: flex; gap: 12px; justify-content: center; }
-        .confirm-actions button {
-            flex: 1; padding: 14px; border-radius: var(--radius-md); font-family: 'Outfit', sans-serif; font-size: 15px; cursor: pointer; border: none; font-weight: 500; transition: var(--transition-smooth);
-        }
-        .btn-modal-cancel { background: var(--surface-hover); color: var(--text); border: 1px solid var(--border); }
-        .btn-modal-cancel:hover { background: rgba(255,255,255,0.1); }
-        .btn-modal-confirm { background: var(--accent); color: #000; }
-        .btn-modal-confirm:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
-        .btn-modal-danger { background: var(--danger); color: #fff; }
-        .btn-modal-danger:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); }
+    /* Buttons & Badges */
+    .btn {
+        padding: 10px 18px; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; border: 1px solid transparent; transition: var(--transition-smooth); background: rgba(255,255,255,0.05); color: var(--text);
+    }
+    .btn:hover { filter: brightness(1.2); background: rgba(255,255,255,0.1); }
+    .btn-primary { background: var(--accent); color: #fff; box-shadow: 0 4px 12px rgba(59,130,246,0.3); }
+    .btn-success { background: rgba(16, 185, 129, 0.15); color: var(--success); border-color: rgba(16, 185, 129, 0.2); }
+    .btn-danger { background: rgba(239, 68, 68, 0.15); color: var(--danger); border-color: rgba(239, 68, 68, 0.2); }
 
+    /* Forms */
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; font-weight: 500; }
+    .form-input { width: 100%; padding: 14px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'Outfit', sans-serif; outline: none; transition: var(--transition-smooth); }
+    .form-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(59,130,246,0.2); }
+
+    /* Custom Forms Area */
+    .panel-box {
+        background: rgba(17, 24, 39, 0.6);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.05);
+        border-radius: var(--radius-lg);
+        padding: 24px;
+        margin-bottom: 32px;
+    }
+
+    /* Empty state */
+    .empty-state {
+        text-align: center; padding: 60px 20px; background: rgba(17,24,39,0.3); border: 1px dashed rgba(255,255,255,0.1); border-radius: var(--radius-lg); color: var(--text-secondary); display: flex; flex-direction: column; align-items: center; gap: 16px;
+    }
+
+    /* Toasts & Modals */
+    .toast-container { position: fixed; top: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
+    .toast { background: var(--surface); border: 1px solid rgba(255,255,255,0.05); border-left: 4px solid var(--accent); padding: 16px 20px; border-radius: var(--radius-md); box-shadow: 0 20px 40px rgba(0,0,0,0.5); color: #fff; display: flex; align-items: center; gap: 12px; animation: toastIn 0.4s cubic-bezier(0.2,0.8,0.2,1) forwards; }
+    .toast.success { border-left-color: var(--success); } .toast.error { border-left-color: var(--danger); }
+    @keyframes toastIn { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes toastOut { to { opacity: 0; transform: translateX(100%); } }
+    
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index: 9999; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s; }
+    .modal-overlay.show { display: flex; opacity: 1; }
+    .confirm-modal { background: var(--surface); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-lg); padding: 32px; width: 90%; max-width: 440px; text-align: center; transform: scale(0.95); transition: transform 0.3s; box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
+    .modal-overlay.show .confirm-modal { transform: scale(1); }
+    .confirm-modal h3 { font-size: 24px; margin-bottom: 12px; color: #fff; font-weight: 600; }
+    .confirm-modal p { color: var(--text-secondary); margin-bottom: 32px; line-height: 1.6; font-size: 15px; }
+    .confirm-actions { display: flex; gap: 16px; }
+    .confirm-actions button { flex: 1; padding: 14px; border-radius: var(--radius-md); font-weight: 600; cursor: pointer; border: none; font-size: 15px; transition: var(--transition-smooth); }
+    .btn-modal-cancel { background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); }
+    .btn-modal-cancel:hover { background: rgba(255,255,255,0.1); }
+    .btn-modal-confirm { background: var(--accent); color: #fff; box-shadow: 0 4px 15px rgba(59,130,246,0.3); }
+    .btn-modal-confirm:hover { background: #2563eb; }
+    .btn-modal-danger { background: var(--danger); color: #fff; box-shadow: 0 4px 15px rgba(239,68,68,0.3); }
+    .btn-modal-danger:hover { background: #dc2626; }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+        .dashboard-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 768px) {
+        .mobile-header { display: block; }
+        .sidebar { transform: translateX(-100%); width: 280px; }
+        .sidebar.open { transform: translateX(0); box-shadow: 5px 0 25px rgba(0,0,0,0.5); }
+        .main-content { margin-left: 0; width: 100vw; max-width: 100vw; padding: 24px 16px 100px; overflow-x: hidden; }
+        .stats-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+        .stat-card { padding: 16px; }
+        .stat-card .value { font-size: 22px; }
+        .chart-wrapper { height: 200px; }
+        .top-header { flex-direction: column; align-items: flex-start; gap: 16px; padding: 12px; }
+        .page-title { font-size: 22px; }
+        .chart-container { padding: 12px; }
+        .b-time, .b-price-block { flex-direction: column; align-items: flex-start; gap: 8px; }
+        .booking-card { padding: 16px; }
+        .date-filter { width: 100%; justify-content: space-between; }
+        .booking-card { flex-direction: column; align-items: flex-start; gap: 16px; padding: 20px; }
+        .b-time { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.05); padding-right: 0; padding-bottom: 16px; width: 100%; display: flex; justify-content: space-between; align-items: center; }
+        .b-time .end { margin-top: 0; }
+        .b-price-block { width: 100%; display: flex; flex-direction: column; gap: 12px; align-items: stretch; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 16px; margin-top: 8px; text-align: left; }
+        .b-price { margin-bottom: 0; text-align: left; }
+        .b-actions { justify-content: space-between; }
+        .b-actions .btn { flex: 1; text-align: center; }
+        .toast-container { top: auto; bottom: 24px; right: 16px; left: 16px; }
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
     </style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
 </head>
 <body>
 
+<!-- FLOATING MOBILE MENU -->
+<div class="mobile-header">
+    <button class="hamburger-btn" onclick="toggleSidebar()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+    </button>
+</div>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
 <!-- ADMIN LOGIN OVERLAY -->
-<div id="adminLoginOverlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg); z-index:99999; display:flex; align-items:center; justify-content:center; flex-direction:column;">
-    <div style="background:var(--surface); padding:40px; border-radius:var(--radius-lg); border:1px solid var(--border); text-align:center; max-width:400px; width:90%; box-shadow:0 20px 40px rgba(0,0,0,0.5);">
-        <h2 style="margin-bottom:10px; font-weight:400;">Acesso Restrito</h2>
-        <p style="color:var(--text-secondary); margin-bottom:24px; font-size:14px;">Insira a senha administrativa para acessar o painel de controle.</p>
-        <input type="password" id="adminPasswordInput" placeholder="Senha" style="width:100%; padding:12px; background:var(--bg); border:1px solid var(--border); color:var(--text); border-radius:var(--radius-md); font-family:'Outfit', sans-serif; margin-bottom:16px; outline:none; text-align:center; box-sizing:border-box;">
-        <button onclick="checkAdminPassword()" style="width:100%; padding:12px; background:var(--accent); color:#000; border:none; border-radius:var(--radius-md); font-family:'Outfit', sans-serif; font-size:15px; cursor:pointer; font-weight:500;">Entrar</button>
-        <div id="adminLoginError" style="color:var(--danger); margin-top:12px; font-size:13px; display:none;">Senha incorreta.</div>
+<div id="adminLoginOverlay" style="position:fixed; inset:0; background:rgba(3,7,18,0.98); z-index:99999; display:flex; align-items:center; justify-content:center; flex-direction:column; padding: 20px; box-sizing: border-box;">
+    <div style="background:var(--surface); padding:32px 24px; border-radius:24px; border:1px solid rgba(255,255,255,0.05); text-align:center; max-width:400px; width:100%; box-shadow:0 25px 50px rgba(0,0,0,0.5); box-sizing: border-box;">
+        <img src="logo.png" alt="Logo" style="height:60px; margin-bottom:24px; filter: drop-shadow(0 0 15px rgba(59,130,246,0.4));">
+        <h2 style="margin-bottom:12px; font-weight:600; color:#fff; font-size:24px;">Acesso Restrito</h2>
+        <p style="color:var(--text-secondary); margin-bottom:32px; font-size:15px; line-height:1.5;">Insira a credencial administrativa para acessar o painel de controle da Luxury Cars.</p>
+        <input type="password" id="adminPasswordInput" placeholder="Senha de Acesso" style="width:100%; padding:16px; background:rgba(0,0,0,0.2); border:1px solid var(--border); color:#fff; border-radius:12px; font-family:'Outfit', sans-serif; margin-bottom:16px; outline:none; text-align:center; font-size:16px; transition:var(--transition-smooth);">
+        <button onclick="checkAdminPassword()" style="width:100%; padding:16px; background:var(--accent); color:#fff; border:none; border-radius:12px; font-family:'Outfit', sans-serif; font-size:16px; cursor:pointer; font-weight:600; box-shadow: 0 4px 15px rgba(59,130,246,0.3); transition:var(--transition-smooth);">Acessar Painel</button>
+        <div id="adminLoginError" style="color:var(--danger); margin-top:16px; font-size:14px; display:none; font-weight:500;">Senha incorreta. Tente novamente.</div>
     </div>
 </div>
 
@@ -206,152 +397,232 @@
 
 <div class="toast-container" id="toastContainer"></div>
 
-<div style="max-width: 1000px; margin: 0 auto;">
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <div class="sidebar-logo">
+        <img src="logo.png" alt="Luxury Cars">
+        <h2>Admin PRO</h2>
+    </div>
+    
+    <div class="nav-menu">
+        <div class="nav-item active" id="tab-dia" onclick="switchTab('dia')">
+            <i data-feather="grid"></i> Dashboard
+        </div>
+        <div class="nav-item" id="tab-hist" onclick="switchTab('hist')">
+            <i data-feather="clock"></i> Histórico Geral
+        </div>
+        <div class="nav-item" id="tab-cupons" onclick="switchTab('cupons')">
+            <i data-feather="tag"></i> Gestão de Cupons
+        </div>
+        <div class="nav-item" id="tab-fechados" onclick="switchTab('fechados')">
+            <i data-feather="calendar"></i> Dias Fechados
+        </div>
+        <div class="nav-item" id="tab-clientes" onclick="switchTab('clientes')">
+            <i data-feather="users"></i> Clientes & Tráfego
+        </div>
+    </div>
+    
+    <div style="margin-top: auto; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.05);">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), #1e40af); display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff;">AD</div>
+            <div>
+                <div style="font-size: 14px; font-weight: 600; color: #fff;">Administrador</div>
+                <div style="font-size: 12px; color: var(--success); display: flex; align-items: center; gap: 4px;">
+                    <div style="width: 6px; height: 6px; border-radius: 50%; background: var(--success);"></div> Online
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-    <div class="header">
-        <h1>Painel de Controle</h1>
+<!-- MAIN CONTENT -->
+<div class="main-content">
+
+    <div class="top-header">
+        <div class="page-title" id="page-title-text">
+            <i data-feather="grid"></i>
+            Visão Geral - Hoje
+        </div>
         <div class="date-picker-wrap">
-            <span style="color: var(--text-secondary); font-size: 14px;">Filtrar por data:</span>
-            <input type="date" id="filter-date" onchange="loadBookings()">
+            <div class="date-filter">
+                <i data-feather="calendar" style="width:16px; height:16px; color:var(--text-secondary);"></i>
+                <input type="date" id="filter-date" onchange="loadBookings()">
+            </div>
         </div>
     </div>
 
-    <div id="fb-alert" class="alert-box" style="display:none;">
-        ⚠️ <b>Modo Local Ativo:</b> As credenciais do Firebase não foram configuradas no código. O sistema está lendo os dados salvos apenas no seu navegador atual. Para gerenciar agendamentos reais em nuvem, insira as chaves no script.
+    <div id="fb-alert" style="display:none; background:rgba(245, 158, 11, 0.1); border:1px solid rgba(245, 158, 11, 0.2); padding:16px 20px; border-radius:12px; color:var(--warning); margin-bottom:24px; font-size:14px; display:flex; align-items:center; gap:12px;">
+        <i data-feather="alert-triangle"></i>
+        <div><b>Modo Local Ativo:</b> Firebase não configurado. Os dados estão sendo salvos apenas no navegador atual.</div>
     </div>
 
-    <div class="tabs">
-        <div class="tab active" id="tab-dia" onclick="switchTab('dia')">Agendamentos do Dia</div>
-        <div class="tab" id="tab-hist" onclick="switchTab('hist')">Histórico Geral</div>
-        <div class="tab" id="tab-cupons" onclick="switchTab('cupons')">Gestão de Cupons</div>
-        <div class="tab" id="tab-fechados" onclick="switchTab('fechados')">Dias Fechados</div>
-        <div class="tab" id="tab-clientes" onclick="switchTab('clientes')">Clientes</div>
-    </div>
-
+    <!-- VIEW DIA -->
     <div id="view-dia">
-        <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+        <div class="stats-grid">
             <div class="stat-card">
-                <div class="val" id="stat-total">0</div>
-                <div class="lbl">Carros Aceitos/Agendados</div>
+                <i data-feather="check-circle" class="icon-wrapper" style="color:var(--accent);"></i>
+                <div class="lbl">Agendamentos Hoje</div>
+                <div class="val" id="stat-total" style="color:var(--accent);">0</div>
             </div>
             <div class="stat-card">
-                <div class="val" id="stat-revenue" style="color: var(--success);">R$ 0,00</div>
+                <i data-feather="dollar-sign" class="icon-wrapper" style="color:var(--success);"></i>
                 <div class="lbl">Faturamento Estimado</div>
+                <div class="val" id="stat-revenue" style="color: var(--success);">R$ 0,00</div>
             </div>
             <div class="stat-card">
+                <i data-feather="x-circle" class="icon-wrapper" style="color:var(--danger);"></i>
+                <div class="lbl">Cancelados</div>
                 <div class="val" id="stat-cancelled" style="color: var(--danger);">0</div>
-                <div class="lbl">Carros Cancelados</div>
             </div>
             <div class="stat-card">
+                <i data-feather="trending-down" class="icon-wrapper" style="color:var(--danger);"></i>
+                <div class="lbl">Perda Estimada</div>
                 <div class="val" id="stat-loss" style="color: var(--danger);">R$ 0,00</div>
-                <div class="lbl">Faturamento Perdido</div>
             </div>
         </div>
 
-        <div class="booking-list" id="bookings-container">
+
+        <div class="list-header">
+            <div><i data-feather="list" style="display:inline-block; vertical-align:middle; margin-right:8px; width:20px;"></i> Lista de Horários</div>
+        </div>
+        <div id="bookings-container">
             <!-- Rendered via JS -->
         </div>
     </div>
     
+    <!-- VIEW HISTORICO -->
     <div id="view-hist" style="display: none;">
-        <div class="booking-list" id="history-container">
+        <div class="list-header">
+            <div><i data-feather="clock" style="display:inline-block; vertical-align:middle; margin-right:8px; width:20px;"></i> Histórico Completo</div>
+        </div>
+        
+        <div class="dashboard-grid">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <i data-feather="bar-chart-2"></i> Fluxo de Agendamentos (Geral)
+                </div>
+                <div class="chart-wrapper"><canvas id="bookingsChart"></canvas></div>
+            </div>
+            <div class="chart-container">
+                <div class="chart-header" style="color:var(--success);">
+                    <i data-feather="trending-up"></i> Faturamento Estimado (R$)
+                </div>
+                <div class="chart-wrapper"><canvas id="revenueChart"></canvas></div>
+            </div>
+        </div>
+
+        <div id="history-container">
             <!-- Rendered via JS -->
         </div>
     </div>
 
+    <!-- VIEW CUPONS -->
     <div id="view-cupons" style="display: none;">
-        <div style="background: var(--surface); padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 24px;">
-            <h3 style="margin-top:0; margin-bottom: 16px; font-weight:400;">Criar Novo Cupom</h3>
-            <div style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+        <div class="panel-box">
+            <h3 style="margin-top:0; margin-bottom: 24px; font-weight:600; color:#fff; font-size:20px; display:flex; align-items:center; gap:8px;"><i data-feather="plus-circle" style="color:var(--accent);"></i> Criar Novo Cupom</h3>
+            <div style="display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 180px;">
+                    <label class="form-label">Código do Cupom</label>
+                    <input type="text" id="new-cupom-code" class="form-input" placeholder="Ex: VIP20" style="text-transform:uppercase;">
+                </div>
+                <div style="flex: 1; min-width: 120px;">
+                    <label class="form-label">Desconto (%)</label>
+                    <input type="number" id="new-cupom-discount" class="form-input" placeholder="15" min="1" max="100">
+                </div>
+                <div style="flex: 1; min-width: 140px;">
+                    <label class="form-label">Máx. Usos (Total)</label>
+                    <input type="number" id="new-cupom-maxuses" class="form-input" placeholder="Ilimitado" min="1">
+                </div>
+                <div style="flex: 1; min-width: 140px;">
+                    <label class="form-label">Usos por Cliente</label>
+                    <input type="number" id="new-cupom-maxperuser" class="form-input" placeholder="1" min="1">
+                </div>
                 <div style="flex: 1; min-width: 160px;">
-                    <label style="display:block; font-size:12px; color:var(--text-secondary); margin-bottom:8px;">Código do Cupom</label>
-                    <input type="text" id="new-cupom-code" placeholder="Ex: VIP20" style="width:100%; padding:12px; background:var(--bg); border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:'Outfit',sans-serif; text-transform:uppercase; box-sizing:border-box;">
+                    <label class="form-label">Data de Expiração</label>
+                    <input type="date" id="new-cupom-expires" class="form-input">
                 </div>
-                <div style="flex: 1; min-width: 100px;">
-                    <label style="display:block; font-size:12px; color:var(--text-secondary); margin-bottom:8px;">Desconto (%)</label>
-                    <input type="number" id="new-cupom-discount" placeholder="15" min="1" max="100" style="width:100%; padding:12px; background:var(--bg); border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:'Outfit',sans-serif; box-sizing:border-box;">
-                </div>
-                <div style="flex: 1; min-width: 120px;">
-                    <label style="display:block; font-size:12px; color:var(--text-secondary); margin-bottom:8px;">Máx. de Usos <span style="opacity:0.5;">(global)</span></label>
-                    <input type="number" id="new-cupom-maxuses" placeholder="Ilimitado" min="1" style="width:100%; padding:12px; background:var(--bg); border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:'Outfit',sans-serif; box-sizing:border-box;">
-                </div>
-                <div style="flex: 1; min-width: 120px;">
-                    <label style="display:block; font-size:12px; color:var(--text-secondary); margin-bottom:8px;">Máx. usos/usuário <span style="opacity:0.5;">(padrão: 1)</span></label>
-                    <input type="number" id="new-cupom-maxperuser" placeholder="1" min="1" style="width:100%; padding:12px; background:var(--bg); border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:'Outfit',sans-serif; box-sizing:border-box;">
-                </div>
-                <div style="flex: 1; min-width: 150px;">
-                    <label style="display:block; font-size:12px; color:var(--text-secondary); margin-bottom:8px;">Valido até <span style="opacity:0.5;">(opcional)</span></label>
-                    <input type="date" id="new-cupom-expires" style="width:100%; padding:12px; background:var(--bg); border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:'Outfit',sans-serif; box-sizing:border-box;">
-                </div>
-                <button onclick="createCoupon()" style="padding: 12px 24px; background: var(--accent); color: #000; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-family:'Outfit',sans-serif; white-space:nowrap;">Salvar Cupom</button>
+                <button onclick="createCoupon()" class="btn btn-primary" style="padding: 14px 24px; font-size:15px; display:flex; align-items:center; gap:8px;"><i data-feather="save" style="width:18px;"></i> Salvar</button>
             </div>
-            <div style="margin-top:12px; padding:10px 14px; background:rgba(14,165,233,0.06); border:1px solid rgba(14,165,233,0.15); border-radius:8px; font-size:12px; color:var(--text-secondary);">
-                🔐 <b style="color:var(--text);">Segurança ativa:</b> Cupons exigem login. Cada cliente só pode usar um cupom uma vez (configurável em «Máx. usos/usuário»). Todos os usos são validados atomicamente no servidor.
+            <div style="margin-top:20px; padding:12px 16px; background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.2); border-radius:8px; font-size:13px; color:var(--text); display:flex; gap:12px; align-items:center;">
+                <i data-feather="shield" style="color:var(--accent); min-width:20px;"></i>
+                <span><b>Segurança ativa:</b> Cupons exigem login. Cada cliente só pode usar um cupom a quantidade de vezes configurada.</span>
             </div>
         </div>
 
-        <div class="booking-list" id="coupons-container">
+        <div class="list-header">
+            <div><i data-feather="tag" style="display:inline-block; vertical-align:middle; margin-right:8px; width:20px;"></i> Cupons Ativos e Expirados</div>
+        </div>
+        <div id="coupons-container">
             <!-- Rendered via JS -->
         </div>
     </div>
 
     <!-- VIEW DIAS FECHADOS -->
     <div id="view-fechados" style="display: none;">
-        <div style="background: var(--surface); padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 24px;">
-            <h3 style="margin-top:0; margin-bottom: 16px; font-weight:400;">Marcar Dia como Fechado</h3>
-            <div style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
-                <div style="flex: 1; min-width: 150px;">
-                    <label style="display:block; font-size:12px; color:var(--text-secondary); margin-bottom:8px;">Selecione a data</label>
-                    <input type="date" id="new-closed-date" style="width:100%; padding:12px; background:var(--bg); border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:'Outfit',sans-serif; box-sizing:border-box;">
+        <div class="panel-box">
+            <h3 style="margin-top:0; margin-bottom: 24px; font-weight:600; color:#fff; font-size:20px; display:flex; align-items:center; gap:8px;"><i data-feather="calendar" style="color:var(--danger);"></i> Bloquear Data</h3>
+            <div style="display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 200px;">
+                    <label class="form-label">Selecione a data para fechar o estabelecimento</label>
+                    <input type="date" id="new-closed-date" class="form-input">
                 </div>
-                <button onclick="addClosedDate()" style="padding: 12px 24px; background: var(--danger); color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-family:'Outfit',sans-serif; white-space:nowrap;">Fechar Dia</button>
+                <button onclick="addClosedDate()" class="btn btn-danger" style="padding: 14px 24px; font-size:15px; display:flex; align-items:center; gap:8px;"><i data-feather="lock" style="width:18px;"></i> Fechar Dia</button>
             </div>
-            <div style="margin-top:12px; padding:10px 14px; background:rgba(239, 68, 68, 0.06); border:1px solid rgba(239, 68, 68, 0.15); border-radius:8px; font-size:12px; color:var(--text-secondary);">
-                🚫 <b style="color:var(--text);">Atenção:</b> Ao marcar um dia como fechado, os clientes não poderão agendar horários nessa data e o calendário mostrará que o local está fechado.
+            <div style="margin-top:20px; padding:12px 16px; background:rgba(239, 68, 68, 0.1); border:1px solid rgba(239, 68, 68, 0.2); border-radius:8px; font-size:13px; color:var(--text); display:flex; gap:12px; align-items:center;">
+                <i data-feather="alert-octagon" style="color:var(--danger); min-width:20px;"></i>
+                <span><b>Atenção:</b> Ao marcar um dia como fechado, clientes não poderão agendar horários nessa data.</span>
             </div>
         </div>
 
-        <div class="booking-list" id="closed-dates-container">
+        <div class="list-header">
+            <div><i data-feather="calendar" style="display:inline-block; vertical-align:middle; margin-right:8px; width:20px;"></i> Dias Bloqueados</div>
+        </div>
+        <div id="closed-dates-container">
             <!-- Rendered via JS -->
         </div>
     </div>
 
     <!-- VIEW CLIENTES -->
     <div id="view-clientes" style="display: none;">
-        <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom:20px;">
+        <div class="stats-grid" style="margin-bottom:24px;">
             <div class="stat-card">
-                <div class="val" id="stat-total-users" style="color: var(--accent);">0</div>
+                <i data-feather="users" class="icon-wrapper" style="color:var(--accent);"></i>
                 <div class="lbl">Usuários Registrados</div>
+                <div class="val" id="stat-total-users" style="color: var(--accent);">0</div>
             </div>
             <div class="stat-card">
-                <div class="val" id="stat-total-anons" style="color: #9ca3af;">0</div>
+                <i data-feather="eye" class="icon-wrapper" style="color:#9ca3af;"></i>
                 <div class="lbl">Visitantes Anônimos</div>
+                <div class="val" id="stat-total-anons" style="color: #9ca3af;">0</div>
             </div>
             <div class="stat-card">
-                <div class="val" id="stat-conversion" style="color: var(--success);">0%</div>
+                <i data-feather="pie-chart" class="icon-wrapper" style="color:var(--success);"></i>
                 <div class="lbl">Taxa de Conversão</div>
+                <div class="val" id="stat-conversion" style="color: var(--success);">0%</div>
             </div>
         </div>
         
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-            <h3 style="margin:0; font-weight:400;">Lista de Tráfego</h3>
-            <div style="display:flex; gap:8px;">
-                <button class="cat-btn on" id="btn-filter-users" onclick="filterTraffic('users')" style="padding:6px 12px; font-size:12px; min-width:auto;">Registrados</button>
-                <button class="cat-btn" id="btn-filter-anons" onclick="filterTraffic('anons')" style="padding:6px 12px; font-size:12px; min-width:auto;">Anônimos</button>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; padding-bottom:16px; border-bottom:1px solid rgba(255,255,255,0.05);">
+            <div class="list-header" style="margin-bottom:0; border:none; padding:0;">
+                <i data-feather="users" style="display:inline-block; vertical-align:middle; margin-right:8px; width:20px;"></i> Lista de Tráfego
+            </div>
+            <div style="display:flex; gap:8px; background:rgba(0,0,0,0.3); padding:4px; border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
+                <button class="btn btn-primary" id="btn-filter-users" onclick="filterTraffic('users')" style="border-radius:6px;">Registrados</button>
+                <button class="btn" id="btn-filter-anons" onclick="filterTraffic('anons')" style="background:transparent; border-radius:6px;">Anônimos</button>
             </div>
         </div>
         
-        <div class="booking-list" id="clientes-container">
+        <div id="clientes-container">
             <!-- Rendered via JS -->
         </div>
-        <div class="booking-list" id="anons-container" style="display:none;">
+        <div id="anons-container" style="display:none;">
             <!-- Rendered via JS -->
         </div>
     </div>
 
 </div>
 
-<!-- ═══ CONFIRM MODAL ═══ -->
+<!-- CONFIRM MODAL -->
 <div class="modal-overlay" id="confirmOverlay" onclick="if(event.target===this) closeConfirmModal()">
     <div class="confirm-modal">
         <h3 id="confirmTitle">Confirmar Ação</h3>
@@ -362,7 +633,6 @@
         </div>
     </div>
 </div>
-
 <script>
     // Set today's date
     const dateInput = document.getElementById('filter-date');
@@ -371,7 +641,7 @@
     dateInput.value = localISOTime;
 
     /* ════════ DATABASE CONFIG ════════ */
-    var isFirebaseEnabled = false;
+    var isFirebaseEnabled = true;
 
     // 🛑 COLOQUE SUAS CREDENCIAIS DO FIREBASE AQUI
     var firebaseConfig = {
@@ -393,8 +663,23 @@
     }
 
     function switchTab(tabId) {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(t => t.classList.remove('active'));
         document.getElementById('tab-' + tabId).classList.add('active');
+        
+        const titles = {
+            'dia': '<i data-feather="grid"></i> Visão Geral - Hoje',
+            'hist': '<i data-feather="clock"></i> Histórico Geral',
+            'cupons': '<i data-feather="tag"></i> Gestão de Cupons',
+            'fechados': '<i data-feather="calendar"></i> Dias Fechados',
+            'clientes': '<i data-feather="users"></i> Clientes & Tráfego'
+        };
+        const titleEl = document.getElementById('page-title-text');
+        if(titleEl && titles[tabId]) titleEl.innerHTML = titles[tabId];
+        
+        if (typeof feather !== 'undefined') feather.replace();
+        
+        document.querySelector('.sidebar').classList.remove('open');
+        document.querySelector('.sidebar-overlay').classList.remove('open');
         
         if (tabId === 'dia') {
             document.getElementById('view-dia').style.display = 'block';
@@ -674,12 +959,12 @@
         
         if(type === 'users') {
             document.getElementById('btn-filter-users').classList.add('on');
-            document.getElementById('clientes-container').style.display = 'flex';
+            document.getElementById('clientes-container').style.display = 'block';
             document.getElementById('anons-container').style.display = 'none';
         } else {
             document.getElementById('btn-filter-anons').classList.add('on');
             document.getElementById('clientes-container').style.display = 'none';
-            document.getElementById('anons-container').style.display = 'flex';
+            document.getElementById('anons-container').style.display = 'block';
         }
     }
 
@@ -899,14 +1184,21 @@
                 div.className = "booking-card";
                 div.style.opacity = "0.8"; // Make historical items slightly faded
                 div.innerHTML = `
-                    <div class="b-time" style="font-size:14px; text-align:center;">${startAMPM}<br><span style="font-size:11px; color:var(--text-secondary);">-<br>${endAMPM}</span></div>
+                    <div class="b-time-block">
+                        <div class="time-start">${startAMPM}</div>
+                        <div class="time-end">${endAMPM}</div>
+                    </div>
                     <div class="b-info">
-                        <div class="b-car">${b.car} <span class="badge ${badge}" style="margin-left:8px;">${badgeTxt}</span></div>
+                        <div class="b-car-row">
+                            <div class="b-car">${b.car} <span class="badge ${badge}" style="margin-left:8px;">${badgeTxt}</span></div>
+                        </div>
                         <div class="b-details" style="color: var(--accent); margin-bottom: 2px;">👤 ${b.clientName || 'S/ Nome'} • 📱 ${b.clientPhone || 'S/ Contato'}</div>
                         <div class="b-details">${b.package} • ${b.extras && b.extras.length ? b.extras.join(", ") : "S/ Adicionais"}</div>
                         ${b.obs ? `<div class="b-details" style="margin-top:4px; font-style:italic; color:#aaa;">📝 Obs: ${b.obs}</div>` : ''}
                     </div>
-                    <div class="b-price" style="${b.status === 'cancelled' ? 'color: var(--danger); text-decoration: line-through;' : 'color: var(--success);'}">${b.total}</div>
+                    <div class="b-price-block">
+                        <div class="b-price" style="${b.status === 'cancelled' ? 'color: var(--danger); text-decoration: line-through;' : 'color: var(--success);'}">${b.total}</div>
+                    </div>
                 `;
                 container.appendChild(div);
             });
@@ -1013,15 +1305,26 @@
 
             let acts = "";
             let phoneStr = b.clientPhone ? b.clientPhone.replace(/\D/g, '') : '';
+            
+            // Wpp Lembrete
+            let wppBtn = "";
+            if (phoneStr && phoneStr.length >= 10 && (b.status === "pending" || b.status === "confirmed")) {
+                let p = phoneStr; if (!p.startsWith("55")) p = "55" + p;
+                let msg = encodeURIComponent(`Olá ${b.clientName||''}, passando para lembrar do seu agendamento no Luxury Cars para ${b.car||'o seu veículo'} às ${formatAMPM(b.time)} do dia ${b.date.split('-').reverse().join('/')}.`);
+                wppBtn = `<a href="https://wa.me/${p}?text=${msg}" target="_blank" class="btn" style="background:#25D366; color:#fff; padding: 10px 14px; display:flex; align-items:center; justify-content:center; gap:6px; text-decoration:none; box-shadow: 0 4px 15px rgba(37,211,102,0.2);" title="Lembrar Cliente no WhatsApp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg> Lembrete</a>`;
+            }
+
             if (b.status === "pending") {
                 acts = `
                     <button class="btn" style="background:var(--accent); color:#000;" onclick="openConfirmModal('${b.id}', 'confirmed', '${phoneStr}', '${b.clientName}', '${b.date}', '${b.time}')">Aceitar</button>
                     <button class="btn btn-danger" onclick="openConfirmModal('${b.id}', 'cancelled', '${phoneStr}', '${b.clientName}', '${b.date}', '${b.time}')">Recusar</button>
+                    ${wppBtn}
                 `;
             } else if (b.status === "confirmed") {
                 acts = `
                     <button class="btn btn-success" onclick="openConfirmModal('${b.id}', 'completed', '${phoneStr}', '${b.clientName}', '${b.date}', '${b.time}')">Concluir</button>
                     <button class="btn btn-danger" onclick="openConfirmModal('${b.id}', 'cancelled', '${phoneStr}', '${b.clientName}', '${b.date}', '${b.time}')">Cancelar</button>
+                    ${wppBtn}
                 `;
             } else if (b.status === "completed" || b.status === "cancelled") {
                 acts = `
@@ -1037,20 +1340,31 @@
             const div = document.createElement("div");
             div.className = "booking-card";
             div.innerHTML = `
-                <div class="b-time" style="font-size:14px; text-align:center;">${startAMPM}<br><span style="font-size:11px; color:var(--text-secondary);">-<br>${endAMPM}</span></div>
-                <div class="b-info">
-                    <div class="b-car">${b.car} <span class="badge ${badge}" style="margin-left:8px;">${badgeTxt}</span></div>
-                    <div class="b-details" style="color: var(--accent); margin-bottom: 4px;">👤 ${b.clientName || 'S/ Nome'} • 📱 ${b.clientPhone || 'S/ Contato'}</div>
-                    <div class="b-details">${b.package} • ${b.extras && b.extras.length ? b.extras.join(", ") : "S/ Adicionais"}</div>
-                    ${b.obs ? `<div class="b-details" style="margin-top:4px; font-style:italic; color:#aaa;">📝 Obs: ${b.obs}</div>` : ''}
+                <div class="b-time-block">
+                    <div class="time-start">${startAMPM}</div>
+                    <div class="time-end">${endAMPM}</div>
                 </div>
-                <div class="b-price">${b.total}</div>
-                <div class="b-actions">${acts}</div>
+                <div class="b-info">
+                    <div class="b-car-row">
+                        <div class="b-car">${b.car} <span class="badge ${badge}" style="margin-left:8px;">${badgeTxt}</span></div>
+                    </div>
+                    <div class="b-details" style="color: var(--accent); margin-bottom: 6px; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                        <div style="display:flex; align-items:center; gap:4px; background:rgba(14,165,233,0.1); padding:4px 8px; border-radius:6px; border:1px solid rgba(14,165,233,0.2);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> ${b.clientName || 'S/ Nome'}</div>
+                        <div style="display:flex; align-items:center; gap:4px; background:rgba(255,255,255,0.05); padding:4px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.1); color:var(--text);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg> ${b.clientPhone || 'S/ Contato'}</div>
+                    </div>
+                    <div class="b-details" style="font-weight:500;">${b.package} • ${b.extras && b.extras.length ? b.extras.join(", ") : "S/ Adicionais"}</div>
+                    ${b.obs ? `<div class="b-details" style="margin-top:6px; font-style:italic; color:#fff; padding: 8px 12px; background: rgba(245,158,11,0.1); border-left: 4px solid #f59e0b; border-radius: 4px;">📝 ${b.obs}</div>` : ''}
+                </div>
+                <div class="b-price-block">
+                    <div class="b-price" style="margin-bottom:12px;">${b.total}</div>
+                    <div class="b-actions" style="flex-wrap: wrap; justify-content: flex-end;">${acts}</div>
+                </div>
             `;
             container.appendChild(div);
         });
 
         updateStats(countAcc, revAcc, countCanc, revCanc);
+    initOrUpdateChart(bookings);
     }
 
     function updateStats(countAcc, revAcc, countCanc, revCanc) {
@@ -1209,9 +1523,135 @@
         closeConfirmModal();
     }
 
+        /* â•â•â•â•â•â•â•â• CHART LOGIC â•â•â•â•â•â•â•â• */
+    let bookingsChartInstance = null;
+    let revenueChartInstance = null;
+
+    function initOrUpdateChart(bookings) {
+        const bCanvas = document.getElementById('bookingsChart');
+        const rCanvas = document.getElementById('revenueChart');
+        if (!bCanvas || !rCanvas) return;
+        
+        let hourlyData = { "08:00":0, "09:00":0, "10:00":0, "11:00":0, "12:00":0, "13:00":0, "14:00":0, "15:00":0, "16:00":0, "17:00":0, "18:00":0 };
+        let hourlyRevenue = { "08:00":0, "09:00":0, "10:00":0, "11:00":0, "12:00":0, "13:00":0, "14:00":0, "15:00":0, "16:00":0, "17:00":0, "18:00":0 };
+        
+        bookings.forEach(b => {
+            
+            if(b.status !== 'cancelled' && b.time) {
+                let hour = b.time.split(':')[0] + ':00';
+                if(hourlyData[hour] !== undefined) hourlyData[hour]++;
+                else hourlyData[hour] = 1;
+                
+                let val = parseFloat((b.total || "0").replace(/[^\d,-]/g, '').replace(',', '.'));
+                if (!isNaN(val)) {
+                    if(hourlyRevenue[hour] !== undefined) hourlyRevenue[hour] += val;
+                    else hourlyRevenue[hour] = val;
+                }
+            }
+        });
+        
+        const labels = Object.keys(hourlyData);
+        const bData = Object.values(hourlyData);
+        const rData = Object.values(hourlyRevenue);
+        
+        Chart.defaults.color = '#9ca3af';
+        Chart.defaults.font.family = "'Outfit', sans-serif";
+        const customTooltip = { backgroundColor: 'rgba(17,24,39,0.95)', titleColor: '#fff', padding: 12, cornerRadius: 8, borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1 };
+
+        if (bookingsChartInstance) {
+            bookingsChartInstance.data.datasets[0].data = bData;
+            bookingsChartInstance.update();
+        } else {
+            let ctxB = bCanvas.getContext('2d');
+            let gradB = ctxB.createLinearGradient(0, 0, 0, 400);
+            gradB.addColorStop(0, 'rgba(59, 130, 246, 0.9)');
+            gradB.addColorStop(1, 'rgba(59, 130, 246, 0.2)');
+            
+            bookingsChartInstance = new Chart(ctxB, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Agendamentos',
+                        data: bData,
+                        backgroundColor: gradB,
+                        borderColor: 'transparent',
+                        borderWidth: 0,
+                        borderRadius: 6,
+                        borderSkipped: false,
+                        barPercentage: 0.5
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: customTooltip },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 }, grid: { color: 'rgba(255,255,255,0.05)', drawBorder: false } },
+                        x: { grid: { display: false, drawBorder: false } }
+                    }
+                }
+            });
+        }
+
+        if (revenueChartInstance) {
+            revenueChartInstance.data.datasets[0].data = rData;
+            revenueChartInstance.update();
+        } else {
+            let ctxR = rCanvas.getContext('2d');
+            let gradR = ctxR.createLinearGradient(0, 0, 0, 300);
+            gradR.addColorStop(0, 'rgba(16, 185, 129, 0.5)');
+            gradR.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+
+            revenueChartInstance = new Chart(ctxR, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Faturamento (R$)',
+                        data: rData,
+                        backgroundColor: gradR,
+                        borderColor: '#10b981',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#111827',
+                        pointBorderColor: '#10b981',
+                        pointBorderWidth: 3,
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: customTooltip },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)', drawBorder: false } },
+                        x: { grid: { display: false, drawBorder: false } }
+                    },
+                    interaction: { mode: 'index', intersect: false }
+                }
+            });
+        }
+    }
+
+    function toggleSidebar() {
+        document.querySelector('.sidebar').classList.toggle('open');
+        document.querySelector('.sidebar-overlay').classList.toggle('open');
+    }
+
     // Initial load
     loadBookings();
 
 </script>
+    <script>
+        if(typeof feather !== 'undefined') feather.replace();
+        document.querySelector('.sidebar').classList.remove('open');
+        document.querySelector('.sidebar-overlay').classList.remove('open');
+    </script>
 </body>
 </html>
+
+
+
+
+
