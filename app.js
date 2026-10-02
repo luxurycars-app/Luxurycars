@@ -194,13 +194,13 @@ function initSearch() {
 
     inp.addEventListener("input", function() {
         var q = this.value.trim();
-        if (q.length < 2) { closeDrop(); return; }
+        if (q.length < 1) { closeDrop(); return; }
         showDrop(q);
     });
 
     inp.addEventListener("focus", function() {
         var q = this.value.trim();
-        showDrop(q);
+        if (q.length > 0) showDrop(q);
     });
 
     inp.addEventListener("keydown", function(e) {
@@ -399,7 +399,7 @@ var firebaseConfig = {
     measurementId: "G-YRD7XQQGNL"
 };
 
-if (firebaseConfig.apiKey !== "SUA_API_KEY") {
+if (typeof firebase !== 'undefined' && firebaseConfig.apiKey !== "SUA_API_KEY") {
     firebase.initializeApp(firebaseConfig);
     var db = firebase.firestore();
     isFirebaseEnabled = true;
@@ -1082,7 +1082,7 @@ async function enviarAgendamentoWhatsApp() {
         bookedCars.push(selCar.n);
         localStorage.setItem("luxury_booked_cars", JSON.stringify(bookedCars));
     }
-        var successScreen = 
+        var successScreen = `
     <div id="successScreen" style="position:fixed; inset:0; background:rgba(5,5,5,0.95); backdrop-filter:blur(15px); z-index:99999; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:20px; animation: fadeInDown 0.5s cubic-bezier(0.16, 1, 0.3, 1);">
         <div style="background:rgba(15,15,15,0.8); padding:50px 30px; border-radius:32px; border:1px solid rgba(14,165,233,0.3); box-shadow:0 30px 60px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.1); max-width:400px; width:100%;">
             <div style="width:80px; height:80px; border-radius:50%; background:rgba(14,165,233,0.1); display:flex; align-items:center; justify-content:center; margin:0 auto 24px auto; border:2px solid var(--accent); box-shadow:0 0 30px rgba(14,165,233,0.4);">
@@ -1093,7 +1093,7 @@ async function enviarAgendamentoWhatsApp() {
             <button class="btn-primary" onclick="window.location.reload()" style="width:100%; padding:18px; font-size:16px;">Fazer Novo Agendamento</button>
         </div>
     </div>
-    ;
+    `;
     
     document.body.insertAdjacentHTML('beforeend', successScreen);
 
@@ -1499,6 +1499,9 @@ function showToast(msg) {
         setTimeout(function() { t.remove(); }, 300);
     }, 4000);
 }
+
+
+
 
 
 

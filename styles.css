@@ -1816,3 +1816,53 @@ input[type="date"]::-webkit-date-and-time-value {
     82% { opacity: 1; transform: translateX(-4px); clip-path: inset(50% 0 35% 0); }
     92% { opacity: 1; transform: translateX(2px); clip-path: inset(80% 0 5% 0); }
 }
+
+/* ====== MOBILE OPTIMIZATIONS (iPhone & Android) ====== */
+html, body {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+}
+
+.step-container, .modal-overlay, .dashboard-modal, .map-modal, .admin-container {
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-top: env(safe-area-inset-top);
+}
+
+button, input, select, textarea, .car-item, .pay-option, .pkg-card {
+    -webkit-appearance: none;
+    touch-action: manipulation;
+}
+
+/* Fix iOS 100vh bug */
+html {
+    height: -webkit-fill-available;
+}
+body {
+    min-height: 100vh; /* Fallback */
+    min-height: -webkit-fill-available;
+}
+
+/* Smooth scrolling on iOS */
+.dropdown, .modal-overlay, .dashboard-modal {
+    -webkit-overflow-scrolling: touch;
+}
+
+/* ====== DASHBOARD MODAL FIX ====== */
+.dashboard-modal {
+    background: rgba(25, 30, 40, 0.85) !important;
+    backdrop-filter: blur(25px) saturate(150%) !important;
+    border: 1px solid rgba(255,255,255,0.15) !important;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.1) !important;
+}
+.btn-google {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
